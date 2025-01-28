@@ -7,3 +7,5 @@ Neo6m v2
 Node-MCU 32-S (ESP32)
 Geared DC motor
 L298N Motor Driver Module
+
+You need to calibrate your compass before using it
