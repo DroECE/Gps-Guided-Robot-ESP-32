@@ -1,6 +1,6 @@
 
-//Flash this and rotate your robot, after that enter any key on your serial monitor to show, max and min (x,y)
-// then put to values to main.ino
+//Flash this and rotate your robot, after that enter any key on your serial monitor to show, max (x,y) and min (x,y)
+// then put values to main.ino
 
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
