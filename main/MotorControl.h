@@ -1,20 +1,54 @@
-#ifndef MOTORCONTROL_H
-#define MOTORCONTROL_H
+#ifndef MOTOR_CONTROL_H
+#define MOTOR_CONTROL_H
 
-// Define motor control pins
-#define MOTOR1_IN1 32  // Left motor
-#define MOTOR1_IN2 33
-#define MOTOR2_IN1 18  // Right motor
-#define MOTOR2_IN2 19
+class MotorControl {
+public:
+    // Constructor
+    MotorControl();
+    
+    // Initialize motor pins
+    void begin(int rpwmPin1, int lpwmPin1, int rpwmPin2, int lpwmPin2);
+    
+    // Basic movement functions
+    void moveForward();
+    void moveBackward();
+    void turnLeft();
+    void turnRight();
+    void sharpLeft();
+    void sharpRight();
+    void stopMotors();
+    
+    // Speed control
+    void setSpeed(int speed);
+    
+private:
+    // Motor control pins
+    int _rpwmPin1;
+    int _lpwmPin1;
+    int _rpwmPin2;
+    int _lpwmPin2;
+    
+    // Speed settings
+    int _currentSpeed;
+    static const int PWM_CHANNEL_R1 = 0;
+    static const int PWM_CHANNEL_L1 = 1;
+    static const int PWM_CHANNEL_R2 = 2;
+    static const int PWM_CHANNEL_L2 = 3;
+    static const int PWM_RESOLUTION = 8;
+    static const int PWM_FREQUENCY = 1000;
+    
+    // Helper functions
+    void setupPWMChannel(int channel, int pin);
+};
 
-// Function declarations
+// Global function declarations
 void setupMotors();
 void moveForward();
-void stopMotors();
+void moveBackward();
 void turnLeft();
 void turnRight();
 void sharpLeft();
 void sharpRight();
-void moveReverse();
+void stopMotors();
 
-#endif // MOTORCONTROL_H
+#endif // MOTOR_CONTROL_H
