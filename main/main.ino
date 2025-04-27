@@ -14,8 +14,12 @@
 #define SDA_PIN 21      // ESP32 SDA Pin
 #define SCL_PIN 22      // ESP32 SCL Pin
 
-// Pin Definitions for Relay
-#define RELAY_PIN 25    // Relay control pin
+#define RELAY_PIN 27  // ESP32 GPIO pin for relay control
+bool relayState = false;  // Track relay state
+
+// Mode Control
+bool manualMode = false;  // false = autonomous GPS mode, true = manual control mode
+const int MANUAL_SPEED = 200;  // Speed for manual control (0-255)
 
 // GPS and Compass instances
 TinyGPSPlus gps;                               // GPS library instance
@@ -65,8 +69,8 @@ struct Location {
     float longitude;
 };
 
-Location targetLocations[10];  // Increased to hold up to 10 target locations
-int currentTargetIndex = 0;    // Index of the current target location
+Location targetLocations[6]; // Array to hold up to 6 target locations
+int currentTargetIndex = 0;  // Index of the current target location
 
 // Previous heading value for comparison
 float previousHeading = -1;  // Initialize with an invalid heading to ensure the first print
@@ -79,6 +83,9 @@ void setup() {
     SerialBT.begin("ESP32-GPS-Mower");
     Serial.println("Bluetooth ready. Connect and send commands.");
 
+    pinMode(RELAY_PIN, OUTPUT);
+    digitalWrite(RELAY_PIN, LOW);  // Start with relay off
+
     // Initialize Compass
     if (!compass.begin()) {
         Serial.println("Error: Compass not found!");
@@ -86,17 +93,20 @@ void setup() {
     }
     Serial.println("Compass initialized.");
 
-    // Initialize Relay
-    pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, LOW); // Ensure relay is off initially
-
     setupMotors();                                            // Initialize motor pins
     Serial.println("System ready. Waiting for coordinates...");
 }
 
+
 void loop() {
     handleBluetooth();
 
+    if (manualMode) {
+        // In manual mode, all control is handled by parseBluetoothData()
+        return;
+    }
+
+    // Existing autonomous navigation code
     if (stopFlag) {
         stopMotors();
         return;
@@ -125,7 +135,7 @@ void updateGPS() {
 void updateCompass() {
     sensors_event_t event;
     compass.getEvent(&event);
-
+  
     float mag_x, mag_y;
     if (useCalibratedMag) {
         mag_x = mapf(event.magnetic.x, magX_min, magX_max, -100, 100);
@@ -165,85 +175,298 @@ void handleBluetooth() {
 
 // Parse Bluetooth data into coordinates or commands
 void parseBluetoothData() {
-    if (receivedData.startsWith("kp:")) {
-        Kp = receivedData.substring(3).toFloat();
-        Serial.printf("Kp updated to: %.2f\n", Kp);
-        SerialBT.printf("Kp updated to: %.2f\n", Kp);
-    } else if (receivedData.startsWith("ki:")) {
-        Ki = receivedData.substring(3).toFloat();
-        Serial.printf("Ki updated to: %.2f\n", Ki);
-        SerialBT.printf("Ki updated to: %.2f\n", Ki);
-    } else if (receivedData.startsWith("kd:")) {
-        Kd = receivedData.substring(3).toFloat();
-        Serial.printf("Kd updated to: %.2f\n", Kd);
-        SerialBT.printf("Kd updated to: %.2f\n", Kd);
-    } else if (receivedData == "l") {
+    // Common commands that work in both modes
+    if (receivedData == "c") {  // Relay control - works in both modes
+        digitalWrite(RELAY_PIN, HIGH);
+        relayState = true;
+        Serial.println("Relay turned ON");
+        SerialBT.println("Relay turned ON");
+        return;  // Exit after handling relay command
+    } else if (receivedData == "x") {  // Relay control - works in both modes
+        digitalWrite(RELAY_PIN, LOW);
+        relayState = false;
+        Serial.println("Relay turned OFF");
+        SerialBT.println("Relay turned OFF");
+        return;  // Exit after handling relay command
+    }
+    
+    // Mode switching and other commands
+    if (receivedData == "l") {
         sendLocationViaBluetooth();
     } else if (receivedData == "s") {
-        stopFlag = true;  // Set stop flag
+        stopFlag = true;
         stopMotors();
         Serial.println("STOP command received. Motors stopped.");
-        SerialBT.println("STOP ALL FUNCTIONS");
+        SerialBT.println("STOP command received. Motors stopped.");
     } else if (receivedData == "g") {
-        stopFlag = false;  // Clear stop flag
-        targetReachedFlag = false;  // Reset target reached flag for new command
-        allTargetsReached = false;  // Reset all targets reached flag for new command
-        Serial.println("GO command received. Resuming operation.");
-        SerialBT.println("RESUME ALL FUNCTIONS");
-    } else if (receivedData == "pid") {
-        sendPIDValuesViaBluetooth();
-    } else if (receivedData == "c") {
-        digitalWrite(RELAY_PIN, HIGH); // Turn relay on
-        Serial.println("Relay ON command received.");
-        SerialBT.println("Cutter ON");
-    } else if (receivedData == "") {
-        digitalWrite(RELAY_PIN, LOW); // Turn relay off
-        Serial.println("Relay OFF command received.");
-        SerialBT.println("Cutter OFF");
+        stopFlag = false;
+        targetReachedFlag = false;
+        allTargetsReached = false;
+        manualMode = false;  // Exit manual mode when starting GPS navigation
+        Serial.println("GO command received. Resuming autonomous operation.");
+        SerialBT.println("GO command received. Resuming autonomous operation.");
+    } else if (receivedData == "m") {  // Enter manual mode
+        manualMode = true;
+        stopFlag = true;  // Stop any ongoing autonomous movement
+        Serial.println("Entering manual control mode");
+        SerialBT.println("Entering manual control mode");
+    } else if (receivedData == "a") {  // Enter autonomous mode
+        manualMode = false;
+        Serial.println("Entering autonomous mode");
+        SerialBT.println("Entering autonomous mode");
+    } else if (manualMode) {  // Handle manual control commands
+        switch (receivedData[0]) {
+            case '8':  // Forward
+                moveForward();
+                Serial.println("Manual: Moving Forward");
+                break;
+            case '2':  // Backward
+                moveBackward();
+                Serial.println("Manual: Moving Backward");
+                break;
+            case '4':  // Left
+                turnLeft();
+                Serial.println("Manual: Turning Left");
+                break;
+            case '6':  // Right
+                turnRight();
+                Serial.println("Manual: Turning Right");
+                break;
+            case '5':  // Stop
+                stopMotors();
+                Serial.println("Manual: Stopped");
+                break;
+        }
     } else {
         parseTargetLocations(receivedData);
     }
 }
 
-// Parse multiple target coordinates in [[lat1, long1], [lat2, long2]] format
+// Parse multiple target coordinates in format [[lat,long], [lat,long], ...]
+// Parse multiple target coordinates in format [[lat,long], [lat,long], ...]
 void parseTargetLocations(String data) {
-    int startIndex = data.indexOf("[[");
-    int endIndex = data.lastIndexOf("]]");
+    int index = 0;
+    int startPos = 0;
+    
+    // Clear any previous coordinates
+    memset(targetLocations, 0, sizeof(targetLocations));
+    
+    // Find the outermost brackets
+    int firstBracket = data.indexOf('[');
+    int lastBracket = data.lastIndexOf(']');
+    
+    if (firstBracket == -1 || lastBracket == -1) {
+        Serial.println("Invalid format: Missing outer brackets");
+        SerialBT.println("Error: Use format [[lat,long], [lat,long], ...]");
+        return;
+    }
+    
+    // Extract the content between outer brackets
+    String coordsArray = data.substring(firstBracket + 1, lastBracket);
+    startPos = 0;
+    
+    while (startPos < coordsArray.length() && index < 6) {
+        // Find the next coordinate pair
+        int coordStart = coordsArray.indexOf('[', startPos);
+        if (coordStart == -1) break;
+        
+        int coordEnd = coordsArray.indexOf(']', coordStart);
+        if (coordEnd == -1) break;
+        
+        // Extract the coordinate pair string
+        String coordPair = coordsArray.substring(coordStart + 1, coordEnd);
+        
+        // Find the comma separator
+        int commaPos = coordPair.indexOf(',');
+        if (commaPos != -1) {
+            String latStr = coordPair.substring(0, commaPos);
+            String lonStr = coordPair.substring(commaPos + 1);
+            
+            // Convert to float and store
+            float lat = latStr.toFloat();
+            float lon = lonStr.toFloat();
+            
+            // Store coordinates if they are valid
+            if (isValidCoordinate(lat, lon)) {
+                targetLocations[index].latitude = lat;
+                targetLocations[index].longitude = lon;
+                index++;
+                
+                // Debug output only to Serial, not to SerialBT
+                Serial.printf("Added target %d: [%.6f, %.6f]\n", 
+                            index, lat, lon);
+            }
+        }
+        
+        // Move to next coordinate pair
+        startPos = coordEnd + 1;
+    }
+    
+    if (index > 0) {
+        currentTargetIndex = 0;
+        stopFlag = false;
+        targetReachedFlag = false;
+        allTargetsReached = false;
+        
+        // Simple target count message to SerialBT
+        SerialBT.printf("New targets set: %d\n", index);
+        
+        // Detailed debug info only to Serial monitor
+        Serial.printf("New targets set: %d locations\n", index);
+        Serial.print("Parsed coordinates: [");
+        for (int i = 0; i < index; i++) {
+            Serial.printf("[%.6f, %.6f]%s", 
+                        targetLocations[i].latitude, 
+                        targetLocations[i].longitude,
+                        (i < index - 1) ? ", " : "");
+        }
+        Serial.println("]");
+    } else {
+        Serial.println("Invalid coordinate format!");
+        SerialBT.println("Error: Use format [[lat,long], [lat,long], ...] or send 'l', 's', or 'g'.");
+    }
+}
 
-    if (startIndex == -1 || endIndex == -1) {
-        Serial.println("Invalid data format! Use [[lat1, long1], [lat2, long2], ...]");
-        SerialBT.println("Error: Invalid format! Use [[lat1, long1], [lat2, long2], ...]");
+// Helper function to validate coordinates
+bool isValidCoordinate(float lat, float lon) {
+    // Basic coordinate validation
+    if (lat < -90 || lat > 90) return false;  // Invalid latitude
+    if (lon < -180 || lon > 180) return false; // Invalid longitude
+    if (isnan(lat) || isnan(lon)) return false; // NaN check
+    
+    return true;
+}
+
+// Modified sendLocationViaBluetooth to match new format
+void sendLocationViaBluetooth() {
+    if (gps.location.isValid()) {
+        int satellites = gps.satellites.value();
+        float hdop = gps.hdop.hdop();
+
+        // Format current location in the new array format
+        SerialBT.printf("Current Location: [[%.6f, %.6f]]\n", 
+                       currentLat, currentLong);
+        SerialBT.printf("Satellites: %d, HDOP: %.2f\n", 
+                       satellites, hdop);
+
+        Serial.printf("Satellites: %d, HDOP: %.2f\n", 
+                     satellites, hdop);
+    } else {
+        SerialBT.println("GPS location unavailable.");
+    }
+}
+
+// Navigation Logic
+void navigateToTarget() {
+    if (currentTargetIndex >= 6 || targetLocations[currentTargetIndex].latitude == 0.0 || targetLocations[currentTargetIndex].longitude == 0.0) {
+        if (!allTargetsReached) {
+            Serial.println("No target coordinates set or all targets reached.");
+            allTargetsReached = true;  // Set flag to indicate message has been printed
+        }
         return;
     }
 
-    data = data.substring(startIndex + 2, endIndex);  // Extract the content inside [[ ]]
+    float targetLat = targetLocations[currentTargetIndex].latitude;
+    float targetLong = targetLocations[currentTargetIndex].longitude;
 
-    int index = 0;
-    while (data.length() > 0 && index < 10) {  // Limit the number of coordinates to 10
-        int commaIndex = data.indexOf(",");
-        int closeIndex = data.indexOf("]");
+    distanceToTarget = calculateDistance(targetLat, targetLong);
+    targetHeading = calculateHeading(targetLat, targetLong);
 
-        if (commaIndex == -1 || closeIndex == -1) break;
+    Serial.printf("Distance to Target: %d meters\n", distanceToTarget);
+    Serial.printf("Target Heading: %d°, Current Heading: %d°\n", targetHeading, currentHeading);
 
-        float lat = data.substring(0, commaIndex).toFloat();
-        float lng = data.substring(commaIndex + 1, closeIndex).toFloat();
+    // If robot reaches target, stop motors and send message
+    if (distanceToTarget <= WAYPOINT_DIST_TOLERANCE) {
+        if (!targetReachedFlag) {
+            Serial.println("Target reached!");
+            stopMotors();  // Ensure motors are stopped
+            targetReachedFlag = true;  // Mark as reached
+            SerialBT.println("Robot has arrived at the target location.");  // Send notification
 
-        targetLocations[index].latitude = lat;
-        targetLocations[index].longitude = lng;
-        index++;
-
-        data = data.substring(closeIndex + 2);  // Move to the next coordinate pair
+            // Add a 5-second stop at the destination before proceeding to the next target
+            delay(5000);  // 5000 milliseconds = 5 seconds
+            Serial.println("5-second stop complete. Proceeding to the next target.");
+            currentTargetIndex++;  // Move to the next target
+        }
+        return;
     }
 
-    if (index > 0) {
-        currentTargetIndex = 0;
-        stopFlag = false;  // Clear stop flag if new targets are set
-        targetReachedFlag = false;  // Reset target reached flag for new targets
-        allTargetsReached = false;  // Reset all targets reached flag for new targets
-        Serial.printf("New targets set: %d locations\n", index);
-        SerialBT.printf("New targets set: %d locations\n", index);
-    } else {
-        Serial.println("No valid coordinates found!");
-        SerialBT.println("Error: No valid coordinates found!");
+    pidController();
+    move_robot();
+}
+
+// PID Controller for heading adjustment
+void pidController() {
+    headingError = targetHeading - currentHeading;
+    if (headingError < -180) headingError += 360;
+    if (headingError > 180) headingError -= 360;
+
+    // Integral term calculation
+    integral += headingError;
+
+    // Derivative term calculation
+    float derivative = headingError - previousError;
+
+    // PID calculation
+    error_output = Kp * headingError + Ki * integral + Kd * derivative;
+    previousError = headingError;
+
+    // Debugging statements
+    Serial.printf("Heading Error: %d\n", headingError);
+    Serial.printf("PID Output: %f\n", error_output);
+}
+
+// Calculate Distance to Target using spherical law of cosines
+int calculateDistance(float targetLat, float targetLong) {
+    float delta = radians(currentLong - targetLong);
+    float sdlong = sin(delta);
+    float cdlong = cos(delta);
+    float lat1 = radians(currentLat);
+    float lat2 = radians(targetLat);
+    float slat1 = sin(lat1);
+    float clat1 = cos(lat1);
+    float slat2 = sin(lat2);
+    float clat2 = cos(lat2);
+    delta = (clat1 * slat2) - (slat1 * clat2 * cdlong);
+    delta = sq(delta);
+    delta += sq(clat2 * sdlong);
+    delta = sqrt(delta);
+    float denom = (slat1 * slat2) + (clat1 * clat2 * cdlong);
+    delta = atan2(delta, denom);
+    return delta * 6372795;  // Earth's radius in meters
+}
+
+// Calculate Target Heading
+int calculateHeading(float targetLat, float targetLong) {
+    float dLon = radians(targetLong - currentLong);
+    float y = sin(dLon) * cos(radians(targetLat));
+    float x = cos(radians(currentLat)) * sin(radians(targetLat)) -
+              sin(radians(currentLat)) * cos(radians(targetLat)) * cos(dLon);
+    float bearing = atan2(y, x) * 180.0 / PI;
+    return (bearing >= 0) ? bearing : (360.0 + bearing);
+}
+
+// Move Robot based on PID controller output
+void move_robot() {
+    if (abs(error_output) <= HEADING_TOLERANCE) {
+        Serial.println("Moving forward...");
+        moveForward();
+    } else if (error_output > 0 && error_output < 60) {
+        Serial.println("Adjusting right...");
+        turnRight();
+    } else if (error_output < 0 && error_output > -60) {
+        Serial.println("Adjusting left...");
+        turnLeft();
+    } else if (error_output >= 60) {
+        Serial.println("Sharp right turn...");
+        sharpRight();
+    } else if (error_output <= -60) {
+        Serial.println("Sharp left turn...");
+        sharpLeft();
     }
+}
+
+// Map function for floating-point values
+double mapf(double x, double in_min, double in_max, double out_min, double out_max) {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
