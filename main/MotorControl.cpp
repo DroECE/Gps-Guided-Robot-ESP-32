@@ -8,9 +8,9 @@
 #define LPWM_PIN2 33  // Left PWM pin for motor 2
 
 // Speed settings
-#define DEFAULT_SPEED 200      // Default speed (0-255)
-#define TURN_SPEED 150        // Speed durifng turns
-#define SHARP_TURN_SPEED 200  // Speed during sharp turns
+#define DEFAULT_SPEED 130      // Default speed (0-255)
+#define TURN_SPEED 100        // Speed durifng turns
+#define SHARP_TURN_SPEED 150  // Speed during sharp turns
 
 // Global instance
 MotorControl motorControl;
@@ -43,27 +43,27 @@ void MotorControl::setSpeed(int speed) {
 
 void MotorControl::moveForward() {
     // Motor 1
-    ledcWrite(PWM_CHANNEL_R1, _currentSpeed);
+    ledcWrite(PWM_CHANNEL_R1, _currentSpeed / 2);
     ledcWrite(PWM_CHANNEL_L1, 0);
     
     // Motor 2
-    ledcWrite(PWM_CHANNEL_R2, _currentSpeed);
+    ledcWrite(PWM_CHANNEL_R2, _currentSpeed / 2);
     ledcWrite(PWM_CHANNEL_L2, 0);
 }
 
 void MotorControl::moveBackward() {
     // Motor 1
     ledcWrite(PWM_CHANNEL_R1, 0);
-    ledcWrite(PWM_CHANNEL_L1, _currentSpeed);
+    ledcWrite(PWM_CHANNEL_L1, _currentSpeed / 2);
     
     // Motor 2
     ledcWrite(PWM_CHANNEL_R2, 0);
-    ledcWrite(PWM_CHANNEL_L2, _currentSpeed);
+    ledcWrite(PWM_CHANNEL_L2, _currentSpeed / 2);
 }
 
 void MotorControl::turnLeft() {
     // Motor 1 (slower)
-    ledcWrite(PWM_CHANNEL_R1, TURN_SPEED / 2);
+    ledcWrite(PWM_CHANNEL_R1, TURN_SPEED / 4);
     ledcWrite(PWM_CHANNEL_L1, 0);
     
     // Motor 2 (faster)
@@ -77,7 +77,7 @@ void MotorControl::turnRight() {
     ledcWrite(PWM_CHANNEL_L1, 0);
     
     // Motor 2 (slower)
-    ledcWrite(PWM_CHANNEL_R2, TURN_SPEED / 2);
+    ledcWrite(PWM_CHANNEL_R2, TURN_SPEED / 4);
     ledcWrite(PWM_CHANNEL_L2, 0);
 }
 
