@@ -19,7 +19,7 @@ bool relayState = false;  // Track relay state
 
 // Mode Control
 bool manualMode = false;  // false = autonomous GPS mode, true = manual control mode
-const int MANUAL_SPEED = 200;  // Speed for manual control (0-255)
+const int MANUAL_SPEED = 150;  // Speed for manual control (0-255)
 
 // GPS and Compass instances
 TinyGPSPlus gps;                               // GPS library instance
@@ -54,12 +54,12 @@ float error_output = 0;                        // PID controller output
 // Magnetic Declination for Compass
 float magneticDeclination = -3.19; // Use this to correct for any bias errors from true north
 
-// Compass Calibration Values
-float magX_min = -30.26;
-float magY_min = -43.27;
+// Compass Calibration Values 
+float magX_min = -25.36;
+float magY_min = -39.00;
 float magZ_min = -1.00;
-float magX_max = 42.73;
-float magY_max = 30.27;
+float magX_max = 50.45;
+float magY_max = 34.55;
 float magZ_max = 1.00;
 bool useCalibratedMag = true;  // Use calibration values if set to true
 
@@ -323,7 +323,7 @@ void parseTargetLocations(String data) {
         Serial.println("]");
     } else {
         Serial.println("Invalid coordinate format!");
-        SerialBT.println("Error: Use format [[lat,long], [lat,long], ...] or send 'l', 's', or 'g'.");
+        SerialBT.println("Error");
     }
 }
 
@@ -416,24 +416,19 @@ void pidController() {
     Serial.printf("PID Output: %f\n", error_output);
 }
 
-// Calculate Distance to Target using spherical law of cosines
+// Calculate Distance to Target using Haversine Formula
 int calculateDistance(float targetLat, float targetLong) {
-    float delta = radians(currentLong - targetLong);
-    float sdlong = sin(delta);
-    float cdlong = cos(delta);
+    const float R = 6371000;  // Earth's radius in meters
+    float dLat = radians(targetLat - currentLat);
+    float dLon = radians(targetLong - currentLong);
     float lat1 = radians(currentLat);
     float lat2 = radians(targetLat);
-    float slat1 = sin(lat1);
-    float clat1 = cos(lat1);
-    float slat2 = sin(lat2);
-    float clat2 = cos(lat2);
-    delta = (clat1 * slat2) - (slat1 * clat2 * cdlong);
-    delta = sq(delta);
-    delta += sq(clat2 * sdlong);
-    delta = sqrt(delta);
-    float denom = (slat1 * slat2) + (clat1 * clat2 * cdlong);
-    delta = atan2(delta, denom);
-    return delta * 6372795;  // Earth's radius in meters
+
+    float a = sin(dLat / 2) * sin(dLat / 2) +
+              cos(lat1) * cos(lat2) *
+              sin(dLon / 2) * sin(dLon / 2);
+    float c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;  // Distance in meters
 }
 
 // Calculate Target Heading
