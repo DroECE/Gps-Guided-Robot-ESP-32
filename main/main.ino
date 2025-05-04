@@ -21,6 +21,7 @@ bool relayState = false;  // Track relay state
 bool manualMode = false;  // false = autonomous GPS mode, true = manual control mode
 const int MANUAL_SPEED = 150;  // Speed for manual control (0-255)
 
+
 // GPS and Compass instances
 TinyGPSPlus gps;                               // GPS library instance
 Adafruit_HMC5883_Unified compass = Adafruit_HMC5883_Unified(12345);  // Compass instance
@@ -63,6 +64,15 @@ float magY_max = 34.55;
 float magZ_max = 1.00;
 bool useCalibratedMag = true;  // Use calibration values if set to true
 
+
+bool isCalibrating = false;
+unsigned long calibrationStartTime = 0;
+const unsigned long CALIBRATION_DURATION = 20000; // 20 seconds in milliseconds
+float magX_min_temp = 32767;
+float magX_max_temp = -32768;
+float magY_min_temp = 32767;
+float magY_max_temp = -32768;
+
 // Multiple Target Locations
 struct Location {
     float latitude;
@@ -84,7 +94,7 @@ void setup() {
     Serial.println("Bluetooth ready. Connect and send commands.");
 
     pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, LOW);  // Start with relay off
+    digitalWrite(RELAY_PIN, HIGH);  // Start with relay off
 
     // Initialize Compass
     if (!compass.begin()) {
@@ -100,6 +110,11 @@ void setup() {
 
 void loop() {
     handleBluetooth();
+
+    if (isCalibrating) {
+        calibrateCompass();
+        return;  // Skip other processing while calibrating
+    }
 
     if (manualMode) {
         // In manual mode, all control is handled by parseBluetoothData()
@@ -160,6 +175,49 @@ void updateCompass() {
     }
 }
 
+void calibrateCompass() {
+    sensors_event_t event;
+    compass.getEvent(&event);
+    
+    // Update min/max values for X and Y
+    if (event.magnetic.x < magX_min_temp) magX_min_temp = event.magnetic.x;
+    if (event.magnetic.x > magX_max_temp) magX_max_temp = event.magnetic.x;
+    if (event.magnetic.y < magY_min_temp) magY_min_temp = event.magnetic.y;
+    if (event.magnetic.y > magY_max_temp) magY_max_temp = event.magnetic.y;
+    
+    // Calculate time remaining
+    unsigned long timeElapsed = millis() - calibrationStartTime;
+    unsigned long timeRemaining = (CALIBRATION_DURATION - timeElapsed) / 1000;
+    
+    // Send feedback every second
+    if (timeElapsed % 1000 < 100) {  // Send approx every second
+        SerialBT.printf("Calibrating... %lu seconds remaining\n", timeRemaining);
+        Serial.printf("Current X: %.2f, Y: %.2f\n", event.magnetic.x, event.magnetic.y);
+    }
+    
+    // Check if calibration is complete
+    if (timeElapsed >= CALIBRATION_DURATION) {
+        // Save the calibrated values
+        magX_min = magX_min_temp;
+        magX_max = magX_max_temp;
+        magY_min = magY_min_temp;
+        magY_max = magY_max_temp;
+        
+        // Print results
+        String calibrationResults = "Calibration complete!\n";
+        calibrationResults += "X min: " + String(magX_min) + ", X max: " + String(magX_max) + "\n";
+        calibrationResults += "Y min: " + String(magY_min) + ", Y max: " + String(magY_max);
+        
+        Serial.println(calibrationResults);
+        SerialBT.println(calibrationResults);
+        
+        // Reset calibration state
+        isCalibrating = false;
+        stopMotors();  // Ensure motors are stopped
+        useCalibratedMag = true;  // Enable use of calibrated values
+    }
+}
+
 // Bluetooth Data Handling
 void handleBluetooth() {
     while (SerialBT.available()) {
@@ -175,15 +233,40 @@ void handleBluetooth() {
 
 // Parse Bluetooth data into coordinates or commands
 void parseBluetoothData() {
+
+    if (receivedData == "cc") {
+        // Start calibration
+        isCalibrating = true;
+        calibrationStartTime = millis();
+        
+        // Reset temporary min/max values
+        magX_min_temp = 32767;
+        magX_max_temp = -32768;
+        magY_min_temp = 32767;
+        magY_max_temp = -32768;
+        
+        // Start rotating the robot
+        sharpRight();  // Start rotating right for calibration
+        
+        Serial.println("Starting compass calibration...");
+        SerialBT.println("Starting compass calibration. Please wait 20 seconds...");
+        return;
+    }
+    
+    // If we're calibrating, ignore other commands except stop
+    if (isCalibrating && receivedData != "s") {
+        SerialBT.println("Calibration in progress, please wait...");
+        return;
+    }
     // Common commands that work in both modes
     if (receivedData == "c") {  // Relay control - works in both modes
-        digitalWrite(RELAY_PIN, HIGH);
+        digitalWrite(RELAY_PIN, LOW);
         relayState = true;
         Serial.println("Relay turned ON");
         SerialBT.println("Relay turned ON");
         return;  // Exit after handling relay command
     } else if (receivedData == "x") {  // Relay control - works in both modes
-        digitalWrite(RELAY_PIN, LOW);
+        digitalWrite(RELAY_PIN, HIGH);
         relayState = false;
         Serial.println("Relay turned OFF");
         SerialBT.println("Relay turned OFF");
@@ -337,7 +420,7 @@ bool isValidCoordinate(float lat, float lon) {
     return true;
 }
 
-// Modified sendLocationViaBluetooth to match new format
+
 void sendLocationViaBluetooth() {
     if (gps.location.isValid()) {
         int satellites = gps.satellites.value();
