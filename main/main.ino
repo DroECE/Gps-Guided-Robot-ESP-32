@@ -279,6 +279,8 @@ void parseBluetoothData() {
     } else if (receivedData == "s") {
         stopFlag = true;
         stopMotors();
+        digitalWrite(RELAY_PIN, HIGH);
+        relayState = false;
         Serial.println("STOP command received. Motors stopped.");
         SerialBT.println("STOP command received. Motors stopped.");
     } else if (receivedData == "g") {
@@ -464,7 +466,7 @@ void navigateToTarget() {
             Serial.println("Target reached!");
             stopMotors();  // Ensure motors are stopped
             targetReachedFlag = true;  // Mark as reached
-            SerialBT.println("Robot has arrived at the target location.");  // Send notification
+            SerialBT.println("Mower has arrived at the target location.");  // Send notification
 
             // Add a 5-second stop at the destination before proceeding to the next target
             delay(5000);  // 5000 milliseconds = 5 seconds
