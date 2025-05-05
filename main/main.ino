@@ -90,7 +90,7 @@ void setup() {
     GPS_Serial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN); // GPS initialization
 
     // Initialize Bluetooth
-    SerialBT.begin("ESP32-GPS-Mower");
+    SerialBT.begin("IoT Based Lawn Mower");
     Serial.println("Bluetooth ready. Connect and send commands.");
 
     pinMode(RELAY_PIN, OUTPUT);
