@@ -1,134 +1,90 @@
-<mxfile host="app.diagrams.net" modified="2023-11-15T12:00:00" agent="Mozilla/5.0" version="22.1.6" type="device">
-  <diagram name="Page-1" id="Uxhl3M8vVX5XPKvRlB1S">
-    <mxGraphModel dx="1200" dy="580" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+<mxfile host="app.diagrams.net" modified="2024-05-15T10:00:00.000Z" agent="Mozilla/5.0" version="23.1.3" etag="abc123" type="device">
+  <diagram name="Autonomous Lawn Mower Navigation" id="123456">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
-        <mxCell id="0" />
-        <mxCell id="1" parent="0" />
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
         
-        <!-- START -->
-        <mxCell id="start" value="START" style="ellipse;whiteSpace=wrap;html=1;fillColor=#4D9900;strokeColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="350" y="20" width="80" height="40" as="geometry" />
+        <!-- START NODE -->
+        <mxCell id="start" value="START" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#4D9900;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="400" y="50" width="80" height="40" as="geometry"/>
         </mxCell>
-
-        <!-- Initialize System -->
-        <mxCell id="init" value="Initialize System:&#10;- Motors (setupMotors())&#10;- Compass/GPS/Bluetooth&#10;- Ultrasonic Sensors" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;" vertex="1" parent="1">
-          <mxGeometry x="300" y="80" width="200" height="100" as="geometry" />
+        
+        <!-- INITIALIZE SYSTEM -->
+        <mxCell id="init" value="Initialize System\n- Motors\n- GPS/Compass\n- Ultrasonic Sensors\n- Bluetooth/WiFi" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;" vertex="1" parent="1">
+          <mxGeometry x="350" y="120" width="180" height="100" as="geometry"/>
         </mxCell>
-        <mxCell id="edge1" style="edgeStyle=none;curved=1;endArrow=classic;endFill=1;" edge="1" parent="1" source="start" target="init">
-          <mxGeometry relative="1" as="geometry" />
+        
+        <!-- WAIT FOR COMMAND -->
+        <mxCell id="wait" value="Wait for Command" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
+          <mxGeometry x="375" y="250" width="130" height="80" as="geometry"/>
         </mxCell>
-
-        <!-- Mode Check -->
-        <mxCell id="modeCheck" value="Manual Mode?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
-          <mxGeometry x="325" y="200" width="150" height="80" as="geometry" />
+        
+        <!-- MANUAL MODE -->
+        <mxCell id="manual" value="Manual Mode\n- Process Bluetooth/WiFi\n- Direct Motor Control\n- Blade ON/OFF" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#CCE5FF;" vertex="1" parent="1">
+          <mxGeometry x="150" y="360" width="160" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="edge2" style="edgeStyle=none;endArrow=classic;endFill=1;" edge="1" parent="1" source="init" target="modeCheck">
-          <mxGeometry relative="1" as="geometry" />
+        
+        <!-- AUTONOMOUS MODE -->
+        <mxCell id="auto" value="Autonomous Mode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5E8D4;" vertex="1" parent="1">
+          <mxGeometry x="450" y="360" width="160" height="60" as="geometry"/>
         </mxCell>
-
-        <!-- Manual Mode Branch -->
-        <mxCell id="manualMode" value="Wait for Bluetooth Command" style="parallelogram;whiteSpace=wrap;html=1;fillColor=#D5E8D4;" vertex="1" parent="1">
-          <mxGeometry x="100" y="300" width="150" height="60" as="geometry" />
+        
+        <!-- SENSOR READING -->
+        <mxCell id="sensors" value="Read Sensors\n- GPS Position\n- Compass Heading\n- Ultrasonic Distance" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;" vertex="1" parent="1">
+          <mxGeometry x="450" y="450" width="160" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="edge3" value="Yes" style="edgeStyle=none;endArrow=classic;endFill=1;" edge="1" parent="1" source="modeCheck" target="manualMode">
-          <mxGeometry relative="1" as="geometry" />
+        
+        <!-- OBSTACLE CHECK -->
+        <mxCell id="obstacle" value="Obstacle Detected?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
+          <mxGeometry x="450" y="570" width="160" height="80" as="geometry"/>
         </mxCell>
-
-        <!-- Autonomous Mode Branch -->
-        <mxCell id="autoMode" value="Autonomous Mode" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;" vertex="1" parent="1">
-          <mxGeometry x="400" y="300" width="120" height="60" as="geometry" />
+        
+        <!-- OBSTACLE AVOIDANCE -->
+        <mxCell id="avoid" value="Obstacle Avoidance\n- Stop\n- Turn Away\n- Re-path" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;" vertex="1" parent="1">
+          <mxGeometry x="450" y="680" width="160" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="edge4" value="No" style="edgeStyle=none;endArrow=classic;endFill=1;" edge="1" parent="1" source="modeCheck" target="autoMode">
-          <mxGeometry relative="1" as="geometry" />
+        
+        <!-- NAVIGATION CALCULATIONS -->
+        <mxCell id="nav" value="Calculate:\n- Distance to Target\n- Target Heading\n- PID Adjustment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;" vertex="1" parent="1">
+          <mxGeometry x="450" y="800" width="160" height="90" as="geometry"/>
         </mxCell>
-
-        <!-- Update Sensors -->
-        <mxCell id="updateSensors" value="Update Sensors:&#10;- GPS (updateGPS())&#10;- Compass (updateCompass())&#10;- Ultrasonic (update())" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;" vertex="1" parent="1">
-          <mxGeometry x="350" y="380" width="200" height="90" as="geometry" />
+        
+        <!-- MOVEMENT -->
+        <mxCell id="move" value="Execute Movement\n- Forward/Backward\n- Turn Left/Right\n- Sharp Turns" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#D5E8D4;" vertex="1" parent="1">
+          <mxGeometry x="450" y="920" width="160" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="edge5" style="edgeStyle=none;endArrow=classic;endFill=1;" edge="1" parent="1" source="autoMode" target="updateSensors">
-          <mxGeometry relative="1" as="geometry" />
+        
+        <!-- WAYPOINT CHECK -->
+        <mxCell id="waypoint" value="Waypoint Reached?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
+          <mxGeometry x="450" y="1040" width="160" height="80" as="geometry"/>
         </mxCell>
-
-        <!-- Target Check -->
-        <mxCell id="targetCheck" value="Target Set?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
-          <mxGeometry x="350" y="490" width="150" height="80" as="geometry" />
+        
+        <!-- SAFETY CHECK -->
+        <mxCell id="safety" value="Check Safety:\n- Battery Level\n- Tilt Detection\n- Boundary" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;" vertex="1" parent="1">
+          <mxGeometry x="450" y="1150" width="160" height="90" as="geometry"/>
         </mxCell>
-        <mxCell id="edge6" style="edgeStyle=none;endArrow=classic;endFill=1;" edge="1" parent="1" source="updateSensors" target="targetCheck">
-          <mxGeometry relative="1" as="geometry" />
+        
+        <!-- TELEMETRY -->
+        <mxCell id="telemetry" value="Send Telemetry\n- Position\n- Status\n- Sensor Data" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;" vertex="1" parent="1">
+          <mxGeometry x="450" y="1270" width="160" height="70" as="geometry"/>
         </mxCell>
-
-        <!-- Wait for Coordinates -->
-        <mxCell id="waitCoords" value="Wait for IoT Coordinates" style="parallelogram;whiteSpace=wrap;html=1;fillColor=#D5E8D4;" vertex="1" parent="1">
-          <mxGeometry x="350" y="590" width="150" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="edge7" value="No" style="edgeStyle=none;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="targetCheck" target="waitCoords">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Navigate to Target -->
-        <mxCell id="navigate" value="Navigate to Target:&#10;- Calculate Distance/Heading" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;" vertex="1" parent="1">
-          <mxGeometry x="350" y="670" width="150" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="edge8" value="Yes" style="edgeStyle=none;endArrow=classic;endFill=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="targetCheck" target="navigate">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Target Reached Check -->
-        <mxCell id="targetReached" value="Target Reached?&#10;(≤ 1.5m)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
-          <mxGeometry x="350" y="770" width="150" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="edge9" style="edgeStyle=none;endArrow=classic;endFill=1;" edge="1" parent="1" source="navigate" target="targetReached">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Stop & Cut Grass -->
-        <mxCell id="stopCut" value="Stop Motors → Cut Grass&#10;(RELAY_PIN)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;" vertex="1" parent="1">
-          <mxGeometry x="350" y="870" width="150" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="edge10" value="Yes" style="edgeStyle=none;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="targetReached" target="stopCut">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Obstacle Check -->
-        <mxCell id="obstacleCheck" value="Path Clear?&#10;(Ultrasonic Sensors)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;" vertex="1" parent="1">
-          <mxGeometry x="350" y="950" width="150" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="edge11" value="No" style="edgeStyle=none;endArrow=classic;endFill=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="targetReached" target="obstacleCheck">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Avoid Obstacle -->
-        <mxCell id="avoid" value="Avoid Obstacle&#10;(handleObstacleAvoidance())" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F8CECC;" vertex="1" parent="1">
-          <mxGeometry x="200" y="1050" width="150" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="edge12" value="No" style="edgeStyle=none;endArrow=classic;endFill=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="obstacleCheck" target="avoid">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- PID Control -->
-        <mxCell id="pid" value="PID Control&#10;(pidController())" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#DAE8FC;" vertex="1" parent="1">
-          <mxGeometry x="450" y="1050" width="150" height="60" as="geometry" />
-        </mxCell>
-        <mxCell id="edge13" value="Yes" style="edgeStyle=none;endArrow=classic;endFill=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="obstacleCheck" target="pid">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- Loop Back -->
-        <mxCell id="loop" value="" style="edgeStyle=none;endArrow=classic;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="pid" target="updateSensors">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="loop2" style="edgeStyle=none;endArrow=classic;endFill=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="avoid" target="updateSensors">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- END -->
-        <mxCell id="end" value="END" style="ellipse;whiteSpace=wrap;html=1;fillColor=#FF6666;strokeColor=#000000;" vertex="1" parent="1">
-          <mxGeometry x="350" y="1150" width="80" height="40" as="geometry" />
-        </mxCell>
-        <mxCell id="edge14" style="edgeStyle=none;endArrow=classic;endFill=1;" edge="1" parent="1" source="stopCut" target="end">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
+        
+        <!-- ARROWS/CONNECTIONS -->
+        <mxCell id="arrow1" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="start" target="init"/>
+        <mxCell id="arrow2" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="init" target="wait"/>
+        <mxCell id="arrow3" style="edgeStyle=none;rounded=0;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wait" target="manual"/>
+        <mxCell id="arrow4" style="edgeStyle=none;rounded=0;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="wait" target="auto"/>
+        <mxCell id="arrow5" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="auto" target="sensors"/>
+        <mxCell id="arrow6" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="sensors" target="obstacle"/>
+        <mxCell id="arrow7" value="YES" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="obstacle" target="avoid"/>
+        <mxCell id="arrow8" value="NO" style="edgeStyle=none;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="obstacle" target="nav"/>
+        <mxCell id="arrow9" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="nav" target="move"/>
+        <mxCell id="arrow10" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="move" target="waypoint"/>
+        <mxCell id="arrow11" value="NO" style="edgeStyle=none;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="waypoint" target="safety"/>
+        <mxCell id="arrow12" value="YES" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="waypoint" target="safety"/>
+        <mxCell id="arrow13" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="safety" target="telemetry"/>
+        <mxCell id="arrow14" style="edgeStyle=none;rounded=0;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="telemetry" target="auto"/>
       </root>
     </mxGraphModel>
   </diagram>
